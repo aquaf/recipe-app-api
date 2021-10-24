@@ -1,13 +1,17 @@
 FROM python:3.10-alpine
 
+# set work directory
+WORKDIR /app
+
+# set environment variables
+ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED=1
 
+# copy project
 COPY ./requirements.txt /requirements.txt
 COPY ./app /app
 
-WORKDIR /app
-
-# Make venv and install dependencies and add user
+# install dependencies and create a user    
 RUN pip install --upgrade pip && \
     apk add --update --no-cache postgresql-client && \
     apk add --update --no-cache --virtual .tmp-build-deps \
@@ -16,4 +20,5 @@ RUN pip install --upgrade pip && \
     apk del .tmp-build-deps && \
     adduser -D user
 
+# setup default user
 USER user
