@@ -2,7 +2,7 @@ from django.test import TestCase
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 
-from recipe.models import Tag
+from recipe.models import Tag, Ingridient
 
 User = get_user_model()
 
@@ -17,3 +17,9 @@ class RecipeTests(TestCase):
         tag = Tag.objects.create(user=sample_user(), name="Vegan")
 
         self.assertEqual(str(tag), tag.name)
+
+    def test_ingridient_str(self):
+        """Test ingridient string representation"""
+        ingridient = Ingridient.objects.create(user=sample_user(), name="Cucumber")
+
+        self.assertEqual(str(ingridient), ingridient.name)
