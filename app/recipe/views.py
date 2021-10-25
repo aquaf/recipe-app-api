@@ -2,8 +2,8 @@ from rest_framework import viewsets, mixins
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 
-from recipe.models import Ingridient, Tag
-from recipe.serializers import TagSerializer, IngridientSerializer
+from recipe.models import Ingridient, Tag, Recipe
+from recipe.serializers import RecipeSerializer, TagSerializer, IngridientSerializer, RecipeDetailSerializer
 
 
 class BaseRecipeViewset(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.CreateModelMixin):
@@ -28,7 +28,25 @@ class TagViewset(BaseRecipeViewset):
 
 
 class IngridientViewSet(BaseRecipeViewset):
-    """Manage Ingridient"""
+    """Manage Ingridients"""
 
     queryset = Ingridient.objects.all()
     serializer_class = IngridientSerializer
+
+
+class RecipeViewSet(viewsets.ModelViewSet):
+    """Manage Recipes"""
+
+    authentication_classes = (TokenAuthentication,)
+    permission_classes = (IsAuthenticated,)
+    queryset = Recipe.objects.all()
+    serializer_class = RecipeSerializer
+
+    def get_queryset(self):
+        """Return objects for current authenticated user only"""
+        return self.queryset.filter(user=self.request.user).order_by("-id")
+
+    def get_serializer_class(self):
+        if self.action == "retrieve":
+            return RecipeDetailSerializer
+        return self.serializer_class
