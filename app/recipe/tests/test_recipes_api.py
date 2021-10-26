@@ -1,9 +1,22 @@
+import os
+import tempfile
+
+from PIL import Image
+
 from rest_framework.test import APITestCase
 from rest_framework import status
 
 from recipe.models import Recipe
 from recipe.serializers import RecipeSerializer, RecipeDetailSerializer
-from recipe.tests.utils import User, RECIPE_ULR, sample_ingridient, sample_tag, sample_reciepe, detail_recipe_url
+from recipe.tests.utils import (
+    User,
+    RECIPE_ULR,
+    sample_ingridient,
+    sample_tag,
+    sample_reciepe,
+    detail_recipe_url,
+    upload_image_url,
+)
 
 
 class PublicRecipeTests(APITestCase):
@@ -149,3 +162,36 @@ class PrivateRecipeTests(APITestCase):
         for key in payload.keys():
             self.assertEqual(payload[key], getattr(recipe, key))
         self.assertEqual(tags.count(), 0)
+
+
+class RecipeUploadTests(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user("test@test.ru", "testpass")
+        self.client.force_authenticate(self.user)
+        self.recipe = sample_reciepe(user=self.user)
+
+    def tearDown(self):
+        self.recipe.image.delete()
+
+    def test_upload_image_to_recipe(self):
+        """Test uploading image to recipe successfull"""
+        url = upload_image_url(self.recipe.id)
+        with tempfile.NamedTemporaryFile(suffix=".jpg") as ntf:
+            img = Image.new("RGB", (10, 10))
+            img.save(ntf, format="JPEG")
+            ntf.seek(0)
+
+            res = self.client.post(url, {"image": ntf}, format="multipart")
+
+        self.recipe.refresh_from_db()
+
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        self.assertIn("image", res.data)
+        self.assertTrue(os.path.exists(self.recipe.image.path))
+
+    def test_upload_image_bad_request(self):
+        """Test uploading invalid image"""
+        url = upload_image_url(self.recipe.id)
+        res = self.client.post(url, {"image": "notimage"}, format="multipart")
+
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)

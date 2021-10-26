@@ -1,3 +1,5 @@
+
+
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 
@@ -36,3 +38,8 @@ def sample_reciepe(user, **kwargs) -> Recipe:
     payload.update(kwargs)
 
     return Recipe.objects.create(user=user, **payload)
+
+
+def upload_image_url(id) -> str:
+    """Return url for recipe image upload"""
+    return reverse("recipe:recipe-upload-image", args=[id])

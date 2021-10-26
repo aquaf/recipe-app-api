@@ -1,7 +1,5 @@
-from django.test import client
-
 from rest_framework.test import APITestCase
-from rest_framework import serializers, status
+from rest_framework import status
 
 from recipe.models import Ingridient
 from recipe.serializers import IngridientSerializer
