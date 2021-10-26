@@ -1,38 +1,9 @@
-from django.contrib.auth import get_user_model
-from django.test import client
-from django.urls import reverse
-
 from rest_framework.test import APITestCase
 from rest_framework import status
 
-from recipe.models import Recipe, Tag, Ingridient
+from recipe.models import Recipe
 from recipe.serializers import RecipeSerializer, RecipeDetailSerializer
-
-User = get_user_model()
-RECIPE_ULR = reverse("recipe:recipe-list")
-
-
-def detail_recipe_url(id) -> str:
-    """Return recipe detail url"""
-    return reverse("recipe:recipe-detail", args=[id])
-
-
-def sample_tag(user, name="Sample Tag") -> Tag:
-    """Create and return sample tag"""
-    return Tag.objects.create(user=user, name=name)
-
-
-def sample_ingridient(user, name="Sample Ingridient") -> Ingridient:
-    """Create and return sample ingridient"""
-    return Ingridient.objects.create(user=user, name=name)
-
-
-def sample_reciepe(user, **kwargs) -> Recipe:
-    """Create and return sample recipe"""
-    payload = {"title": "Title", "time_minutes": 5, "price": 5.00}
-    payload.update(kwargs)
-
-    return Recipe.objects.create(user=user, **payload)
+from recipe.tests.utils import User, RECIPE_ULR, sample_ingridient, sample_tag, sample_reciepe, detail_recipe_url
 
 
 class PublicRecipeTests(APITestCase):
@@ -119,7 +90,7 @@ class PrivateRecipeTests(APITestCase):
 
         recipe = Recipe.objects.get(id=res.data["id"])
         tags = recipe.tags.all()
-        self.assertEqual(len(tags), 2)
+        self.assertEqual(tags.count(), 2)
         self.assertIn(tag1, tags)
         self.assertIn(tag2, tags)
 
@@ -141,6 +112,40 @@ class PrivateRecipeTests(APITestCase):
 
         recipe = Recipe.objects.get(id=res.data["id"])
         tags = recipe.ingridiets.all()
-        self.assertEqual(len(tags), 2)
+        self.assertEqual(tags.count(), 2)
         self.assertIn(ingridient1, tags)
         self.assertIn(ingridient2, tags)
+
+    def test_update_recipe_patch(self):
+        """Test update recipe with patch method"""
+        recipe = sample_reciepe(user=self.user)
+        recipe.tags.add(sample_tag(user=self.user))
+        tag1 = sample_tag(user=self.user, name="Sample tag1")
+
+        payload = {"title": "Sample title2", "tags": [tag1.id]}
+        url = detail_recipe_url(recipe.id)
+
+        self.client.patch(url, payload)
+
+        recipe.refresh_from_db()
+        tags = recipe.tags.all()
+        self.assertEqual(recipe.title, payload["title"])
+        self.assertEqual(tags.count(), 1)
+        self.assertIn(tag1, tags)
+
+    def test_update_recipe_put(self):
+        """Test full update recipe with put method"""
+        recipe = sample_reciepe(user=self.user)
+        recipe.tags.add(sample_tag(user=self.user))
+
+        payload = {"title": "Sample title2", "time_minutes": 123, "price": 12.00}
+        url = detail_recipe_url(recipe.id)
+
+        self.client.put(url, payload)
+
+        recipe.refresh_from_db()
+        tags = recipe.tags.all()
+
+        for key in payload.keys():
+            self.assertEqual(payload[key], getattr(recipe, key))
+        self.assertEqual(tags.count(), 0)

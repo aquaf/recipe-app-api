@@ -1,15 +1,9 @@
-from django.contrib.auth import get_user_model
-from django.test import client
-from django.urls import reverse
-
 from rest_framework.test import APITestCase
 from rest_framework import status
 
 from recipe.models import Tag
 from recipe.serializers import TagSerializer
-
-User = get_user_model()
-TAG_URL = reverse("recipe:tag-list")
+from recipe.tests.utils import User, TAG_URL
 
 
 class PublicTagsApiTests(APITestCase):

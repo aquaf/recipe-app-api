@@ -1,16 +1,11 @@
-from django.contrib.auth import get_user_model
 from django.test import client
-from django.urls import reverse
 
 from rest_framework.test import APITestCase
 from rest_framework import serializers, status
 
 from recipe.models import Ingridient
 from recipe.serializers import IngridientSerializer
-
-
-User = get_user_model()
-INGRIDIENT_URL = reverse("recipe:ingridient-list")
+from recipe.tests.utils import User, INGRIDIENT_URL
 
 
 class PublicIngridientApi(APITestCase):
