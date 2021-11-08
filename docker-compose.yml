@@ -3,7 +3,7 @@ version: "3"
 services:
   app:
     build:
-      context: .
+      context: ./app
     ports:  
       - 8000:8000
     volumes:
@@ -12,11 +12,8 @@ services:
       sh -c "python manage.py wait_for_db &&
             python manage.py migrate &&
             python manage.py runserver 0.0.0.0:8000"
-    environment:
-      - DB_HOST=db
-      - DB_NAME=app
-      - DB_USER=postgres
-      - DB_PASSWORD=password
+    env_file:
+      - ./.env.dev
     depends_on:
       - db
 
@@ -26,10 +23,25 @@ services:
       - postgres_data:/var/lib/postgresql/data/
     ports:
       - "5432:5432"
-    environment:
-      - POSTGRES_DB=app
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=password
+    env_file:
+      - ./.env.dev
+
+  redis:
+    image: redis:alpine
+
+  celery:
+    restart: always
+    build:
+      context: ./app
+    command: celery -A core worker -l info
+    volumes:
+      - ./app:/app
+    env_file:
+      - ./.env.dev
+    depends_on:
+      - db
+      - redis
+      - app
     
 volumes:
   postgres_data:

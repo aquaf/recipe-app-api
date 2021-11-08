@@ -3,6 +3,7 @@ from rest_framework import authentication, permissions
 from rest_framework.generics import CreateAPIView, RetrieveUpdateAPIView
 from rest_framework.settings import api_settings
 
+from users.tasks import hello
 from users.serializers import UserSerializer, AuthTokenSerializer
 
 
@@ -26,4 +27,5 @@ class RetrieveUpdateUserView(RetrieveUpdateAPIView):
 
     def get_object(self):
         """Retrieve and return authenticated user"""
+        res = hello.delay()
         return self.request.user

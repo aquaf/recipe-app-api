@@ -4,12 +4,11 @@ FROM python:3.10-alpine
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
-# copy project
-COPY ./requirements.txt /requirements.txt
-COPY ./app /app
-
 # set work directory
 WORKDIR /app
+
+# copy requirements
+COPY ./requirements.txt /requirements.txt
 
 # install dependencies and create a user
 RUN apk add --update --no-cache postgresql-client jpeg-dev
@@ -26,3 +25,6 @@ RUN adduser -D user && \
     chown -R user:user /vol/ && \
     chmod -R 755 /vol/web/
 USER user
+
+# copy project
+COPY . .
